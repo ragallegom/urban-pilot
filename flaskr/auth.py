@@ -7,14 +7,18 @@ from flask import (
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from flaskr.db import get_db
+from flaskr.models.user import RegistrationUser
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+    form = RegistrationUser(request.form)
+
+    if request.method == 'POST' and form.validate():
+        username = form.username.data
+        password = form.password.data
+
         db = get_db()
         error = None
 
@@ -30,6 +34,7 @@ def register():
                     (username, generate_password_hash(password)),
                 )
                 db.commit()
+                flash('Thanks for registering')
             except db.IntegrityError:
                 error = f"User {username} is already registered."
             else:
@@ -37,7 +42,7 @@ def register():
         
         flash(error)
     
-    return render_template('auth/register.html')
+    return render_template('auth/register.html', form=form)
 
 @bp.route('/login', methods=('GET', 'POST'))
 def login():

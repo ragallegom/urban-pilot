@@ -5,11 +5,18 @@
 {% endblock %}
 
 {% block content %}
-  <form method="post">
-    <label for="username">Username</label>
-    <input name="username" id="username" required>
-    <label for="password">Password</label>
-    <input type="password" name="password" id="password" required>
-    <input type="submit" value="Register">
+  {% from "_formhelpers.html" import render_field %}
+  <form method=post>
+    <dl>
+      {{ render_field(form.first_name) }}
+      {{ render_field(form.middle_name) }}
+      {{ render_field(form.last_name) }}
+      {{ render_field(form.username) }}
+      {{ render_field(form.email) }}
+      {{ render_field(form.password) }}
+      {{ render_field(form.confirm) }}
+      {{ render_field(form.zip_code) }}
+    </dl>
+    <p><input type=submit value=Register>
   </form>
 {% endblock %}
