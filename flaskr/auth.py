@@ -2,6 +2,8 @@ import functools
 import requests
 import os
 
+from werkzeug.exceptions import abort
+
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
 )
@@ -114,3 +116,83 @@ def login_required(view):
         return view(**kwargs)
     
     return wrapped_view
+
+@bp.route('/user/<int:id>/update', methods=('GET', 'POST'))
+@login_required
+def update(id):
+    user = get_user(id)
+
+    form = RegistrationUser(request.form, password = user['password'], confirm = user['password'])
+
+    if request.method == 'POST' and form.validate():
+
+        first_name = form.first_name.data
+        middle_name = form.middle_name.data
+        last_name = form.last_name.data
+        username = form.username.data
+        email = form.email.data
+        password = form.password.data
+        zip_code = form.zip_code.data
+        city, state = "", ""
+
+        db = get_db()
+        error = None
+
+        if not username:
+            error = 'Username is required.'
+        
+        if error is None:
+            try:
+                api_key = os.getenv('API_KEY_ZIPCODE')
+                units = "degrees"
+                api_url = f"https://www.zipcodeapi.com/rest/{api_key}/info.json/{zip_code}/{units}"
+
+                response = requests.get(api_url)
+                print(response.json())
+                
+                if "city" in response.json() and "state" in response.json():
+                    data = response.json()
+                    city = data['city']
+                    state = data['state']
+
+                db.execute(
+                    "UPDATE user SET first_name = ?, middle_name = ?, last_name = ?, username = ?, email = ?, zip_code = ?, city = ?, state = ? WHERE id = ?",
+                    (first_name, middle_name, last_name, username, email, zip_code, city, state, id),
+                )
+                db.commit()
+                
+                flash('Update register')
+            except db.IntegrityError as e:
+                error = f"User {username} or {email} is already registered"
+        else:
+            flash(error)
+
+        return redirect(url_for('blog.index'))
+    
+    form = RegistrationUser(
+        id = user['id'],
+        first_name = user['first_name'],
+        middle_name = user['middle_name'],
+        last_name = user['last_name'],
+        username = user['username'],
+        email = user['email'],
+        zip_code =user['zip_code'],
+    )
+
+    return render_template('auth/update.html', form=form, post={"id": id})
+
+def get_user(id, check_author=True):
+    post = get_db().execute(
+        'SELECT *'
+        ' FROM user'
+        ' WHERE id = ?',
+        (id,)
+    ).fetchone()
+
+    if post is None:
+        abort(404, f"User id {id} doesn't exist.")
+
+    if check_author and post['id'] != g.user['id']:
+        abort(403)
+
+    return post

@@ -11,12 +11,12 @@ bp = Blueprint('blog', __name__)
 @bp.route('/')
 def index():
     db = get_db()
-    posts = db.execute(
-        'SELECT p.id, title, body, created, author_id, username'
-        ' FROM post p JOIN user u ON p.author_id = u.id'
-        ' ORDER BY created DESC'
+    post = db.execute(
+        'SELECT id, username, zip_code, city, state'
+        ' FROM user'
+        ' ORDER BY zip_code ASC'
     ).fetchall()
-    return render_template('blog/index.html', posts=posts)
+    return render_template('blog/index.html', posts=post)
 
 @bp.route('/create', methods=('GET', 'POST'))
 @login_required
@@ -92,6 +92,6 @@ def update(id):
 def delete(id):
     get_post(id)
     db = get_db()
-    db.execute('DELETE FROM post WHERE id = ?', (id,))
+    db.execute('DELETE FROM user WHERE id = ?', (id,))
     db.commit()
     return redirect(url_for('blog.index'))

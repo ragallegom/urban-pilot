@@ -1,6 +1,9 @@
-from wtforms import Form, StringField, PasswordField, validators
+from wtforms import Form, IntegerField, StringField, PasswordField, validators
 
 class RegistrationUser(Form):
+    id = IntegerField('Id', [
+        validators.Optional()
+    ])
     first_name = StringField('First Name', [
         validators.DataRequired(),
         validators.Length(min=3, max=25),
