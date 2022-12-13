@@ -1,4 +1,6 @@
 import functools
+import requests
+import os
 
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
@@ -16,8 +18,14 @@ def register():
     form = RegistrationUser(request.form)
 
     if request.method == 'POST' and form.validate():
+        first_name = form.first_name.data
+        middle_name = form.middle_name.data
+        last_name = form.last_name.data
         username = form.username.data
+        email = form.email.data
         password = form.password.data
+        zip_code = form.zip_code.data
+        city, state = "", ""
 
         db = get_db()
         error = None
@@ -29,14 +37,26 @@ def register():
         
         if error is None:
             try:
+                api_key = os.getenv('API_KEY_ZIPCODE')
+                units = "degrees"
+                api_url = f"https://www.zipcodeapi.com/rest/{api_key}/info.json/{zip_code}/{units}"
+
+                response = requests.get(api_url)
+                
+                if "city" in response.json() and "state" in response.json():
+                    data = response.json()
+                    city = data['city']
+                    state = data['state']
+
                 db.execute(
-                    "INSERT INTO user (username, password) VALUES (?, ?)",
-                    (username, generate_password_hash(password)),
+                    "INSERT INTO user (first_name, middle_name, last_name, username, email, password, zip_code, city, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (first_name, middle_name, last_name, username, email, generate_password_hash(password), zip_code, city, state),
                 )
                 db.commit()
+                
                 flash('Thanks for registering')
-            except db.IntegrityError:
-                error = f"User {username} is already registered."
+            except db.IntegrityError as e:
+                error = f"User {username} or {email} is already registered"
             else:
                 return redirect(url_for("auth.login"))
         
