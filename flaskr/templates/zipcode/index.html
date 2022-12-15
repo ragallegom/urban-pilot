@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Zip Code{% endblock %}</h1>
+  {% if g.user %}
+    <a class="action" href="{{ url_for('blog.index') }}">Users</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<h2>Organized by Zip Code</h2>
+<table>
+  <tr>
+    <th>Zip Code</th>
+    <th>Quantity Users</th>
+    <th>City</th>
+    <th>State</th>
+
+  </tr>
+  {% for post in posts %}
+    <tr>
+      <td>{{ post['zip_code'] }}</td>
+      <td>{{ post['users'] }}</td>
+      <td>{{ post['city'] }}</td>
+      <td>{{ post['state'] }}</td>
+    </tr>
+  {% endfor %}
+</table>
+<hr>
+<h2>Organized by State</h2>
+<table>
+  <tr>
+    <th>State</th>
+    <th>Zip Code</th>
+    <th>City</th>
+    <th>Quantity Users</th>
+
+  </tr>
+  {% for post in states %}
+    <tr>
+      <td>{{ post['state'] }}</td>
+      <td>{{ post['zip_code'] }}</td>
+      <td>{{ post['city'] }}</td>
+      <td>{{ post['users'] }}</td>
+    </tr>
+  {% endfor %}
+</table>
+{% endblock %}

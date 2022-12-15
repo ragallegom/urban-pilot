@@ -24,13 +24,15 @@ def register():
     password = form.password.data
 
     error = None
-    if not username:
-        error = 'Username is required.'
-    elif not password:
-        error = 'Password is required.'
+
+    if request.method == 'POST':
+        if not username:
+            error = 'Username is required.'
+        elif not password:
+            error = 'Password is required.'
     
-    if error is not None:
-        flash(error)
+        if error is not None:
+            flash(error)
 
     if request.method == 'POST' and form.validate():
         first_name = form.first_name.data
@@ -67,10 +69,12 @@ def register():
             except db.IntegrityError as e:
                 error = f"User {username} or {email} is already registered"
             else:
+                if g.user is not None:
+                    return redirect(url_for('blog.index'))
                 return redirect(url_for("auth.login"))
         
         flash(error)
-    
+
     return render_template('auth/register.html', form=form)
 
 @bp.route('/login', methods=('GET', 'POST'))

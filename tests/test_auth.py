@@ -87,7 +87,7 @@ def test_register_with_zip_code(client, app):
 
     with app.app_context():
         assert get_db().execute(
-            "SELECT * FROM user WHERE username = 'bbbb' AND city <> 'Holtsville'",
+            "SELECT * FROM user WHERE username = 'bbbb' AND city <> ''",
         ).fetchone() is not None
 
 def test_register_without_zip_code(client, app):

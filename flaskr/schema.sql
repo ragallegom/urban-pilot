@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS user;
 DROP TABLE IF EXISTS post;
+DROP TABLE IF EXISTS zip_code;
 
 CREATE TABLE user (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -21,4 +22,12 @@ CREATE TABLE post(
     title TEXT NOT NULL,
     body TEXT NOT NULL,
     FOREIGN KEY (author_id) REFERENCES user (id)
+);
+
+CREATE TABLE zip_code(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    zip_code TEXT NOT NULL,
+    users INTEGER NOT NULL,
+    city TEXT NULL,
+    state TEXT NULL
 )
