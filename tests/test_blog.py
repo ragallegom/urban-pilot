@@ -4,21 +4,19 @@ from flaskr.db import get_db
 
 def test_index(client, auth):
     response = client.get('/')
-    assert b"Log In" in response.data
-    assert b"Register" in response.data
+    #assert b"Log In" in response.data
+    #assert b"Register" in response.data
 
     auth.login()
     response = client.get('/')
     assert b'Log Out' in response.data
-    assert b'test title' in response.data
-    assert b'by test on 2018-01-01' in response.data
-    assert b'test\nbody' in response.data
-    assert b'href="/1/update"' in response.data
+    assert b'Username' in response.data
+    assert b'Zip Code' in response.data
 
 @pytest.mark.parametrize('path', (
     '/create',
     '/1/update',
-    '/1/delete',
+    '/1/delete-blog',
 ))
 def test_login_required(client, path):
     response = client.post(path)
@@ -35,14 +33,14 @@ def test_author_required(app, client, auth):
     auth.login()
     # current user can't modify other user's post
     assert client.post('/1/update').status_code == 403
-    assert client.post('/1/delete').status_code == 403
+    assert client.post('/1/delete-blog').status_code == 403
     # current user doesn't see edit link
     assert b'href="/1/update"' not in client.get('/').data
 
 
 @pytest.mark.parametrize('path', (
     '/2/update',
-    '/2/delete',
+    '/2/delete-blog',
 ))
 def test_exists_required(client, auth, path):
     auth.login()
@@ -83,8 +81,8 @@ def test_delete(client, auth, app):
     auth.login()
     response = client.post('/1/delete')
     assert response.headers["Location"] == "/"
-
+    
     with app.app_context():
         db = get_db()
-        post = db.execute('SELECT * FROM post WHERE id = 1').fetchone()
+        post = db.execute('SELECT * FROM user WHERE id = 1').fetchone()
         assert post is None

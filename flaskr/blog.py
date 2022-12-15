@@ -9,6 +9,7 @@ from flaskr.db import get_db
 bp = Blueprint('blog', __name__)
 
 @bp.route('/')
+@login_required
 def index():
     db = get_db()
     post = db.execute(
@@ -60,6 +61,22 @@ def get_post(id, check_author=True):
 
     return post
 
+def get_user(id, check_author=True):
+    user = get_db().execute(
+        'SELECT id, username'
+        ' FROM user'
+        ' WHERE id = ?',
+        (id,)
+    ).fetchone()
+
+    if user is None:
+        abort(404, f"user id {id} doesn't exist.")
+
+    if check_author and user['id'] != g.user['id']:
+        abort(403)
+
+    return user
+
 @bp.route('/<int:id>/update', methods=('GET', 'POST'))
 @login_required
 def update(id):
@@ -87,10 +104,19 @@ def update(id):
 
     return render_template('blog/update.html', post=post)
 
+@bp.route('/<int:id>/delete-blog', methods=('POST',))
+@login_required
+def delete_post(id):
+    get_post(id)
+    db = get_db()
+    db.execute('DELETE FROM user WHERE id = ?', (id,))
+    db.commit()
+    return redirect(url_for('blog.index'))
+
 @bp.route('/<int:id>/delete', methods=('POST',))
 @login_required
 def delete(id):
-    get_post(id)
+    get_user(id)
     db = get_db()
     db.execute('DELETE FROM user WHERE id = ?', (id,))
     db.commit()

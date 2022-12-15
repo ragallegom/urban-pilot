@@ -17,7 +17,20 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 @bp.route('/register', methods=('GET', 'POST'))
 def register():
+
     form = RegistrationUser(request.form)
+
+    username = form.username.data
+    password = form.password.data
+
+    error = None
+    if not username:
+        error = 'Username is required.'
+    elif not password:
+        error = 'Password is required.'
+    
+    if error is not None:
+        flash(error)
 
     if request.method == 'POST' and form.validate():
         first_name = form.first_name.data
@@ -30,12 +43,6 @@ def register():
         city, state = "", ""
 
         db = get_db()
-        error = None
-
-        if not username:
-            error = 'Username is required.'
-        elif not password:
-            error = 'Password is required.'
         
         if error is None:
             try:
@@ -124,6 +131,13 @@ def update(id):
 
     form = RegistrationUser(request.form, password = user['password'], confirm = user['password'])
 
+    error = None
+    if not form.username.data:
+        error = 'Username is required.'
+
+    if error is not None:
+        flash(error)
+    
     if request.method == 'POST' and form.validate():
 
         first_name = form.first_name.data
@@ -131,15 +145,10 @@ def update(id):
         last_name = form.last_name.data
         username = form.username.data
         email = form.email.data
-        password = form.password.data
         zip_code = form.zip_code.data
         city, state = "", ""
 
         db = get_db()
-        error = None
-
-        if not username:
-            error = 'Username is required.'
         
         if error is None:
             try:
@@ -164,8 +173,8 @@ def update(id):
                 flash('Update register')
             except db.IntegrityError as e:
                 error = f"User {username} or {email} is already registered"
-        else:
-            flash(error)
+        
+        flash(error)
 
         return redirect(url_for('blog.index'))
     
