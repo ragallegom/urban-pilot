@@ -1,6 +1,8 @@
 import functools
 import requests
 import os
+import json
+import collections
 
 from werkzeug.exceptions import abort
 
@@ -209,3 +211,26 @@ def get_user(id, check_author=True):
         abort(403)
 
     return post
+
+@bp.route('/user/<int:id>/', methods=('GET', 'POST'))
+@login_required
+def get(id):
+    user = get_user(id)
+
+    obj_user = []
+    dict_user = collections.OrderedDict()
+    dict_user["id"] = user[0]
+    dict_user["first_name"] = user[1]
+    dict_user["middle_name"] = user[2]
+    dict_user["last_name"] = user[3]
+    dict_user["email"] = user[4]
+    dict_user["username"] = user[5]
+    dict_user["zip_code"] = user[7]
+    dict_user["city"] = user[8]
+    dict_user["state"] = user[9]
+
+    obj_user.append(dict_user)
+
+    response_json = json.dumps(obj_user)
+
+    return response_json
