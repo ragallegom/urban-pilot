@@ -3,11 +3,15 @@ import requests
 import os
 import json
 import collections
+import jwt
+import datetime
+
+from functools import wraps
 
 from werkzeug.exceptions import abort
 
 from flask import (
-    Blueprint, flash, g, redirect, render_template, request, session, url_for
+    Blueprint, flash, g, redirect, render_template, request, session, url_for, jsonify, current_app
 )
 
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -98,6 +102,7 @@ def login():
         if error is None:
             session.clear()
             session['user_id'] = user['id']
+            token = jwt.encode({'id': user['id'], 'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, current_app.config['SECRET_KEY'])  
             return redirect(url_for('index'))
         
         flash(error)
@@ -213,7 +218,6 @@ def get_user(id, check_author=True):
     return post
 
 @bp.route('/user/<int:id>/', methods=('GET', 'POST'))
-@login_required
 def get(id):
     user = get_user(id)
 
@@ -234,3 +238,23 @@ def get(id):
     response_json = json.dumps(obj_user)
 
     return response_json
+
+def token_required(f):
+    @wraps(f)
+    def decorator(*args, **kwargs):
+        token = None
+
+        if 'x-access-tokens' in request.headers:
+            token = request.headers['x-access-tokens']
+        
+        if not token:
+            return jsonify({'message': 'token is invalid'})
+        
+        try:
+            data = jwt.decode(token, current_app.config['SECRET_KEY'])
+            current_user = get_user(data['id'])
+        except:
+            return jsonify({'message': 'token is invalid'})
+
+        return f(current_user, *args, **kwargs)
+    return decorator
